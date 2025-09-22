@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 
@@ -33,12 +34,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AulaEstadoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HidratacaoComEstado()
+
             }
         }
     }
@@ -82,6 +79,38 @@ fun Hidratacao(modifier: Modifier = Modifier){
         }
 
     }
+}
+
+@Composable
+fun HidratacaoSemEstado(
+    contador: Int,
+    onValueChange: () -> Unit, // Callback para beber água
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(16.dp)) {
+        Text("Você bebeu $contador copos hoje!")
+        Button(
+            onClick = { onValueChange() }, enabled = contador < 10
+        ) {
+            Text("Beber")
+        }
+    }
+}
+@Composable
+fun HidratacaoComEstado(modifier: Modifier = Modifier) {
+    var contadorAgua by rememberSaveable { mutableIntStateOf(0) }
+    var contadorSuco by rememberSaveable { mutableIntStateOf(0) }
+    Column(modifier= modifier.fillMaxSize()) {
+        HidratacaoSemEstado(contador = contadorAgua, onValueChange = { contadorAgua++ })
+        HidratacaoSemEstado(contador = contadorSuco, onValueChange = { contadorSuco++ })
+    }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+private fun HidratacaoComEstadoPreview() {
+    HidratacaoComEstado()
+
 }
 
 
