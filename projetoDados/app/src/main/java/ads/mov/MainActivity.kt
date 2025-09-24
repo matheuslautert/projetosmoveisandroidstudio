@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +52,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun Dados(modifier: Modifier = Modifier) {
+    var novo by rememberSaveable { mutableStateOf(true) }
+    var primeiraRodada by rememberSaveable { mutableStateOf(true) }
+    var fimDoJogo by rememberSaveable { mutableStateOf(false) }
     var face by rememberSaveable { mutableStateOf(0) }
     var face2 by rememberSaveable { mutableStateOf(0) }
     var pontoaBuscar by rememberSaveable { mutableStateOf(0) }
@@ -75,40 +79,74 @@ fun Dados(modifier: Modifier = Modifier) {
     }
 
     soma = face + face2
-    if (pontoaBuscar == 0 && face != 0) {
-        pontoaBuscar = face + face2
-    }
-    if(soma == 0 ) {
+
+    if (soma == 0) {
         mensagem = "Jogue o dado"
     }
-    if (soma == 7 || soma == 11) {
-         mensagem = "Você ganhou"
-    }
-    else if (soma == 2 || soma == 3 || soma == 12){
-         mensagem = "Você perdeu"
+     else if (soma == 7 && pontoaBuscar == 0 || soma == 11) {
+        mensagem = "Você ganhou"
+        fimDoJogo = true
+    } else if (soma == 2 || soma == 3 || soma == 12) {
+        mensagem = "Você perdeu"
+        fimDoJogo = true
+    } else if (pontoaBuscar == 0) {
+        pontoaBuscar = soma
+        mensagem = "Ponto a ser buscado: $pontoaBuscar \n Jogue novamente"
+        fimDoJogo = false
+    } else if (soma == 7 && !primeiraRodada) {
+        mensagem = "Você perdeu, tirou 7 e não foi na primeira rodada"
     } else if (pontoaBuscar == soma) {
-         mensagem = "$face + $face2 = $soma \n Jogador ganhou"
-    }else {
-         mensagem = "Ponto a ser buscado: $pontoaBuscar \n Jogue novamente"
+        mensagem = "$face + $face2 = $soma \n Jogador ganhou"
+        fimDoJogo = true
+
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = painterResource(imagem1),
-            contentDescription = face.toString()
-        )
+    if (!novo) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
+            Image(
+                painter = painterResource(imagem1),
+                contentDescription = face.toString()
+            )
 
-        Image(
-            painter = painterResource(imagem2),
-            contentDescription = face.toString()
-        )
-        Text(text = mensagem )
+            Image(
+                painter = painterResource(imagem2),
+                contentDescription = face.toString()
+            )
+            Text(text = mensagem)
 
-        Button(onClick = {
-            face = (1..6).random();
-            face2 = (1..6).random()
-        }) {
-            Text("Jogar", fontSize = 24.sp)
+            Button(onClick = {
+                face = (1..6).random();
+                face2 = (1..6).random()
+            }) {
+                Text("Jogar", fontSize = 24.sp)
+            }
+            if(fimDoJogo) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
+                    Button(onClick = {
+                        novo = true
+                        fimDoJogo = false
+                        pontoaBuscar = 0
+                        soma = 0
+                        face = 0
+                        face2 = 0
+                        primeiraRodada = true
+                    }) {
+                        Text("Começar novamente", fontSize = 24.sp)
+                    }
+                }
+
+            }
+        }
+
+    }
+    else{
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
+            Button(onClick = {
+                novo = false
+
+            },) {
+                Text("Iniciar Jogo", fontSize = 24.sp)
+            }
         }
 
     }
@@ -123,7 +161,7 @@ fun GreetingPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DadosPreview() {
     DadosTheme {
