@@ -1,170 +1,141 @@
-package ads.mov
+package ads.mov.comviewmodel
 
+import ads.mov.comviewmodel.ui.theme.JogoDeDadosTheme
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.EaseInOutBounce
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import ads.mov.ui.theme.DadosTheme
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            DadosTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            JogoDeDadosTheme {
+                JogoDeDadosScreen()
             }
         }
     }
 }
 
+fun imagemDado(dado: Int): Int {
+    return when (dado) {
+        1 -> R.drawable.dice_1
+        2 -> R.drawable.dice_2
+        3 -> R.drawable.dice_3
+        4 -> R.drawable.dice_4
+        5 -> R.drawable.dice_5
+        else -> R.drawable.dice_6
+    }
+}
+
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
+fun JogoDeDadosScreen(modifier: Modifier = Modifier, viewModel: DadosViewModel = viewModel()) {
+
+    val uiState by viewModel.uiState.collectAsState()
+    var dado1 by remember { mutableIntStateOf(6) }
+    var dado2 by remember { mutableIntStateOf(6) }
+    var situacao by remember { mutableStateOf(situacaoJogo.INICIO) }
+
+    var pontoASerBuscado by remember { mutableIntStateOf(0) }
+
+    // Define a cor de fundo de acordo com a situação do jogo
+    val corDeFundoDeAcordoComSituacao = when (uiState.situacao) {
+        situacaoJogo.INICIO -> MaterialTheme.colorScheme.primaryContainer
+        situacaoJogo.PONTO -> Color(0xFFFFF9C4)
+        situacaoJogo.VENCEU -> Color(0xFFC8E6C9)
+        situacaoJogo.PERDEU -> Color(0xFFFFCDD2)
+    }
+
+    // Anima a transição de cor de fundo
+    val corComAnimacao by animateColorAsState(
+        targetValue = corDeFundoDeAcordoComSituacao,
+        animationSpec = tween(
+            durationMillis = 1000, // velocidade da animação
+            easing = EaseInOutBounce // curva elástica
+        )
     )
-}
 
-@Composable
-fun Dados(modifier: Modifier = Modifier) {
-    var novo by rememberSaveable { mutableStateOf(true) }
-    var primeiraRodada by rememberSaveable { mutableStateOf(true) }
-    var fimDoJogo by rememberSaveable { mutableStateOf(false) }
-    var face by rememberSaveable { mutableStateOf(0) }
-    var face2 by rememberSaveable { mutableStateOf(0) }
-    var pontoaBuscar by rememberSaveable { mutableStateOf(0) }
-    var soma by rememberSaveable { mutableStateOf(0) }
-    var mensagem by rememberSaveable { mutableStateOf("Jogue o dado") }
-
-    val imagem1 = when (face) {
-        1 -> R.drawable.dice_1
-        2 -> R.drawable.dice_2
-        3 -> R.drawable.dice_3
-        4 -> R.drawable.dice_4
-        5 -> R.drawable.dice_5
-        else -> R.drawable.dice_6
-    }
-    val imagem2 = when (face2) {
-        1 -> R.drawable.dice_1
-        2 -> R.drawable.dice_2
-        3 -> R.drawable.dice_3
-        4 -> R.drawable.dice_4
-        5 -> R.drawable.dice_5
-        else -> R.drawable.dice_6
-    }
-
-    soma = face + face2
-
-    if (soma == 0) {
-        mensagem = "Jogue o dado"
-    }
-     else if (soma == 7 && pontoaBuscar == 0 || soma == 11) {
-        mensagem = "Você ganhou"
-        fimDoJogo = true
-    } else if (soma == 2 || soma == 3 || soma == 12) {
-        mensagem = "Você perdeu"
-        fimDoJogo = true
-    } else if (pontoaBuscar == 0) {
-        pontoaBuscar = soma
-        mensagem = "Ponto a ser buscado: $pontoaBuscar \n Jogue novamente"
-        fimDoJogo = false
-    } else if (soma == 7 && !primeiraRodada) {
-        mensagem = "Você perdeu, tirou 7 e não foi na primeira rodada"
-    } else if (pontoaBuscar == soma) {
-        mensagem = "$face + $face2 = $soma \n Jogador ganhou"
-        fimDoJogo = true
-
-    }
-
-    if (!novo) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
-            Image(
-                painter = painterResource(imagem1),
-                contentDescription = face.toString()
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = corComAnimacao
+    )
+    {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .windowInsetsPadding(WindowInsets.statusBars),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text(
+                text = viewModel.getMensagem(),
+                style = MaterialTheme.typography.headlineMedium
             )
-
-            Image(
-                painter = painterResource(imagem2),
-                contentDescription = face.toString()
-            )
-            Text(text = mensagem)
-
-            Button(onClick = {
-                face = (1..6).random();
-                face2 = (1..6).random()
-            }) {
-                Text("Jogar", fontSize = 24.sp)
+            Row {
+                Image(
+                    painter = painterResource(imagemDado(uiState.dado1)),
+                    contentDescription = null,
+                    modifier = Modifier.weight(1f)
+                )
+                Image(
+                    painter = painterResource(imagemDado(uiState.dado2)),
+                    contentDescription = null,
+                    modifier = Modifier.weight(1f)
+                )
             }
-            if(fimDoJogo) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
-                    Button(onClick = {
-                        novo = true
-                        fimDoJogo = false
-                        pontoaBuscar = 0
-                        soma = 0
-                        face = 0
-                        face2 = 0
-                        primeiraRodada = true
-                    }) {
-                        Text("Começar novamente", fontSize = 24.sp)
-                    }
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { viewModel.jogarDados()
                 }
-
+            ) {
+                Text(
+                    text = viewModel.getMensagem2(),
+                    style = MaterialTheme.typography.headlineMedium
+                )
             }
         }
-
-    }
-    else{
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxSize().padding(8.dp)) {
-            Button(onClick = {
-                novo = false
-
-            },) {
-                Text("Iniciar Jogo", fontSize = 24.sp)
-            }
-        }
-
-    }
-
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DadosTheme {
-        Greeting("Android")
     }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun DadosPreview() {
-    DadosTheme {
-        Dados()
-    }
+private fun JogoDeDadosPreview() {
+    JogoDeDadosScreen()
 }
